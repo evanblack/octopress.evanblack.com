@@ -1,0 +1,72 @@
+---
+layout: default
+title: "CodeIgniter Image Upload and Resize"
+---
+<h1>{{ page.title }}</h1>
+<p>One common thing that most developers will want to do when creating a web application with <a href="http://codeigniter.com/" title="CodeIgniter PHP Framework">CodeIgniter</a> is to give their users the ability to upload a profile image. Your code should be able to resize that profile image to the standard size that your design calls for. CodeIgniter provides two great classes to help make this a piece of cake.</p>
+<p>The two library classes we will be working with are the <strong>File Uploading</strong> and <strong>Image Manipulation</strong> classes. With these two classes and the <a href="http://codeigniter.com/user_guide/" title="CodeIgniter User Guide">CodeIgniter User Guide</a> you can probably figure out most of what you need, but I'll make it even easier for you. First, we will start with what you need in the View. This will create your file upload field:</p>
+<h2>The View</h2>
+<pre class="brush: php;">$Fdata = array('name' =&gt; 'user_avatar', 'class' =&gt; 'file');
+echo form_upload($Fdata);
+</pre>
+<p>Also, make sure your form is using '<strong>form_open_multipart</strong>'. Now we will move on to the Controller, where the bulk of the code is. The process here is to configure the upload, do the upload, configure the image resizing and then do the image resize. Here's what you should end up with:</p>
+<h2>The Controller</h2>
+<pre class="brush: php;">if($_FILES['user_avatar']['error'] == 0){
+	//upload and update the file
+	$config['upload_path'] = './images/profile/';
+	$config['allowed_types'] = 'gif|jpg|png';
+	$config['overwrite'] = false;
+	$config['remove_spaces'] = true;
+	//$config['max_size']	= '100';// in KB
+	
+	$this-&gt;load-&gt;library('upload', $config);
+
+	if ( ! $this-&gt;upload-&gt;do_upload('user_avatar'))
+	{
+		$this-&gt;session-&gt;set_flashdata('message', $this-&gt;upload-&gt;display_errors('<p class="error">', '</p>'));
+		redirect('profile');
+	}	
+	else
+	{
+		//Image Resizing
+		$config['source_image'] = $this-&gt;upload-&gt;upload_path.$this-&gt;upload-&gt;file_name;
+		$config['maintain_ratio'] = FALSE;
+		$config['width'] = 40;
+		$config['height'] = 40;
+
+		$this-&gt;load-&gt;library('image_lib', $config);
+
+		if ( ! $this-&gt;image_lib-&gt;resize()){
+			$this-&gt;session-&gt;set_flashdata('message', $this-&gt;image_lib-&gt;display_errors('<p class="error">', '</p>'));				
+		}
+		
+		$this-&gt;MUser-&gt;updateProfile($this-&gt;input-&gt;post('user_id'));
+		//Need to update the session information if email was changed
+		$this-&gt;session-&gt;set_userdata('email', $this-&gt;input-&gt;xss_clean($this-&gt;input-&gt;post('user_email')));
+		$this-&gt;session-&gt;set_flashdata('message', '<p class="message">Your Profile has been Updated!</p>');
+		redirect('profile');
+	}
+}
+</pre>
+<p>You may need to make some changes to a couple of the configuration options to get what you want. You'll also notice at the bottom that I update some of my user session information afterwards. Next up, we'll handle the <strong>updateProfile</strong> function within the User Model. This part is pretty simple:</p>
+<h2>The Model</h2>
+<pre class="brush: php;">function updateProfile($user_id){
+	$profile_data = array(
+	'name' =&gt; $this-&gt;input-&gt;xss_clean($this-&gt;input-&gt;post('user_name')),
+	'email' =&gt; $this-&gt;input-&gt;xss_clean($this-&gt;input-&gt;post('user_email')),
+	'role' =&gt; $this-&gt;input-&gt;xss_clean($this-&gt;input-&gt;post('user_role')),
+	'website' =&gt; $this-&gt;input-&gt;xss_clean($this-&gt;input-&gt;post('user_website'))
+	);
+	//check if password was updated
+	if($this-&gt;input-&gt;post('user_password') != ''){
+		$profile_data['password'] = md5($this-&gt;input-&gt;xss_clean($this-&gt;input-&gt;post('user_password')));
+	}
+	if($_FILES['user_avatar']['error'] == 0){
+		$relative_url = 'images/profile/'.$this-&gt;upload-&gt;file_name;
+		$profile_data['avatar'] = $relative_url;
+	}
+	$this-&gt;db-&gt;where('id', $user_id);
+	$this-&gt;db-&gt;update('user', $profile_data);
+}
+</pre>
+<p>Normally you would want your path to pull from the configuration options you set using $upload['full_path'], but for some reason I've had issues pulling that data from the upload.</p>

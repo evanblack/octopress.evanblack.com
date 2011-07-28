@@ -21,7 +21,7 @@ email:
 # If publishing to a subdirectory as in http://site.com/project set 'root: /project'
 root: /
 port: 4000
-permalink: /blog/:year/:month/:day/:title/
+permalink: /blog/:title
 source: source
 destination: public
 plugins: plugins
@@ -38,7 +38,7 @@ recent_posts: 5 # Posts in the sidebar Recent Posts section
 # ----------------------- #
 
 # Twitter
-twitter_user:
+twitter_user: evanblack
 twitter_tweet_count: 4
 twitter_show_replies: false
 twitter_follow_button: true
@@ -54,7 +54,7 @@ pinboard_user:
 pinboard_count: 3
 
 # Delicious
-delicious_user:
+delicious_user: evanblack
 delicious_count: 3
 
 # Disqus Comments

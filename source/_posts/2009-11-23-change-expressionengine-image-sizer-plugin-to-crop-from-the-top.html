@@ -1,0 +1,21 @@
+---
+layout: default
+title: "Change ExpressionEngine Image Sizer Plugin to Crop From the Top"
+---
+<h1>{{ page.title }}</h1>
+<p>For those of you that don't know, ExpressionEngine's <a href="http://www.lumis.com/page/imgsizer/" title="ImageSizer Plugin">ImageSizer Plugin</a> is awesome. Anytime you have a client that will be uploading content images to a site that need to be certain dimensions this plugin is crucial. It will dynamically resize the image to whatever dimensions you need, and even cache the resized image for you. Also, if you specify a width and a height for the image in the plugin parameters, and the source's dimensions are different, it will even crop the image for you. This is great, but it also has a downside.</p>
+<p>By default, the plugin will crop the image to the specified width and height from the center of the image. This works great in some cases, but recently (on this site actually) I wanted the plugin to crop my images from the top of the image. This, for example, would be desirable if web screenshots were going to be uploaded and used.</p>
+<p>I would've expected this to be a simple parameter passed to the plugin, but unfortunately, it wasn't. I decided to take matters into my own hands and popped open the plugin code. Around line <strong>595</strong> I found this:</p>
+<pre class="brush: php;">if ($crop) 
+{   
+	imagecopyresampled($image_resized, $image, -$int_width, -$int_height, 0, 0, $adjusted_width, $adjusted_height, $width_old, $height_old);
+}
+</pre>
+<h2>Now to Crop from the Top</h2>
+<p>I quickly diagnosed that the <strong>-$int_height</strong> variable was forcing the crop from the center. Changing that variable to a 0 would have the plugin cropping from the top. Here's the code with the change:</p>
+<pre class="brush: php;">if ($crop) 
+{   
+	imagecopyresampled($image_resized, $image, -$int_width, 0, 0, 0, $adjusted_width, $adjusted_height, $width_old, $height_old);
+}
+</pre>
+<p>You could also have the plugin crop from the top left corner if you also changed the <strong>-$int_width</strong> variable to 0. Ideally, you could make some updates to the plugin to pass in a <strong>crop_from</strong> parameter and have it accept a "topleft", "topcenter", "topright", "bottomleft", "bottomcenter", "bottomright", or "center" string.</p>

@@ -1,0 +1,14 @@
+---
+layout: default
+title: "Semantic Inline Form Labels with JQuery"
+---
+<h1>{{ page.title }}</h1>
+<p>A very common thing I see in designs I get these days are form labels that are written within the value of their associated input field. This is handy way for designers to save space and make their designs cleaner all-around. Unfortunately for us developers, simply setting the input value isn't very semantic or usable. Thanks to JQuery there's plenty of easy ways to take care of this.</p>
+<h2>The HTML</h2>
+<p>We'll start with the HTML. Nothing fancy here, just your standard form with labels and inputs.</p>
+<pre class="brush: html;">&lt;form id="signup" name="signup"&gt;<br />	&lt;label for="email"&gt;Email Address&lt;/label&gt;<br />	&lt;input class="text" name="email" type="text" /&gt;<br />	&lt;label for="zip"&gt;Zip Code&lt;/label&gt;<br />	&lt;input class="text zip" name="zip" type="text" /&gt;<br />	&lt;input class="btn" type="submit" value="Sign Up" /&gt;<br />&lt;/form&gt;</pre>
+<p>The CSS isn't important at all to what we're trying to accomplish, so I won't cover any of that. The JQuery on the other hand, is what does most of the work. First of all, we will want to loop through our label elements and assign their values to the inputs that immediately follow. Then you'll want to hide those labels. After that, we will handle the focus and blur events to get rid of those values when people click the form input. Here's the JQuery:</p>
+<h2>The JQuery</h2>
+<pre class="brush: js;">$(document).ready(function() {<br />    $("#signup label").each(function (i) {<br />        $(this).next("input").attr("value",$(this).html()+"...");<br />        $(this).hide();<br />    });<br />    $("#signup input").focus(function() {<br />        if($(this).prev("label").html()+"..." == this.value){<br />            this.value = "";<br />        }<br />    });<br />    $("#signup input").blur(function() {<br />        if(this.value == ""){<br />            this.value = $(this).prev("label").html()+"...";<br />        }<br />    });<br />});</pre>
+<p>Now this is by no means is a new or innovative technique. There are plenty of solutions out there that will accomplish the same goal. This tip is simply what I tend to use to sematically code the designs I get.</p>
+<p><strong>Update (12-18-2009): </strong>Smashing Magazine recently published an article by <a href="http://www.zurb.com/">Zurb</a> called <a href="http://www.smashingmagazine.com/2009/12/16/stronger-better-faster-design-with-css3/">Stronger, Better, Faster Design with CSS3</a> that expands on this technique and makes it even better with CSS3 by just masking the label so even when you click into the input you can still read the label.</p>

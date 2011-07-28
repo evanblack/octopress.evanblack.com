@@ -1,0 +1,109 @@
+---
+layout: default
+title: "Touch \"slide to unlock\" in Mobile Safari"
+---
+<h1>{{ page.title }}</h1>
+<p>I've been reading a bit about implementing touch interfaces recently at work. I didn't realize that, for the most part, it's as easy as attaching Javascript touch events to DOM elements - just like you would with any other events in Javascript. The other thing that is a major help with Mobile Safari development is using the new CSS3 properties for animations and such. Thankfully, since you're primarily tagerting Mobile Safari/Webkit, you don't need to worry too much about cross-browser issues.</p>
+<p>Last week, <a href="http://chriscoyier.net/" title="Chris Coyier">Chris Coyier</a> wrote an article over on <a href="http://css-tricks.com/" title="CSS Tricks">CSS Tricks</a> about recreating the <a href="http://css-tricks.com/slide-to-unlock/" title="iphone slide to unlock text in Webkit/CSS3">iphone "slide to unlock" text in Webkit/CSS3</a>. I thought this would be a perfect opportunity to play around and take it one step further to add touch support for iphone and ipad (again, just as an experiment).</p>
+<h2>The Result</h2>
+<p>Check out the finished <a href="/touch-test/">demo on ipad, iphone or ipod touch</a>.</p>
+<h2>The Markup</h2>
+<p>The markup is pretty much the same as Chris'. I DID add an <strong>id</strong> to the arrow slider so that my Javascript would have a DOM hookup.</p>
+<pre class="brush: html;">
+&lt;div id="page-wrap"&gt;
+	&lt;div id="well"&gt;
+		&lt;h2&gt;&lt;img alt="slider" id="slider" src="/my-admin/arrow.png" /&gt; &lt;span&gt;slide to unlock&lt;/span&gt;&lt;/h2&gt;
+	&lt;/div&gt;
+&lt;/div&gt;
+</pre>
+<h2>The CSS</h2>
+<p>I copied pretty much all of Chris' CSS as well. I did however remove some of the work he did to get the cool animated text highlight since it was messing with some of the Webkit animations I added (and it wasn't really the goal of my experiment). Here is the CSS I've added:</p>
+<pre class="brush: css;">#well {
+	-webkit-transition: opacity 0.4s ease-out;
+}
+</pre>
+<p>This takes care of the fade out animation once you've slid it far enough to unlock. Technically, we'll handle the slide back animation for when you haven't slid the slider far enough in CSS as well, but we'll get to that in the Javascript part.</p>
+<p>Here's my final combined CSS:</p>
+<pre class="brush: css;">/*
+	 CSS-Tricks Example
+	 by Chris Coyier
+	 http://css-tricks.com
+*/
+
+* { margin: 0; padding: 0; }
+html { background: black; }
+body { 
+	font: 14px Georgia, serif; 
+	background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #3b3b3b),color-stop(1, #000000));
+	background-repeat: no-repeat;
+	min-height: 350px;
+	color:#fff;
+}
+#page-wrap { width: 720px; margin: 0 auto; padding-top: 100px; }
+
+#well {
+	padding: 14px 20px 20px 20px;
+	-webkit-border-radius: 30px;
+	-moz-border-radius: 30px;
+	border-radius: 30px;
+	
+	background: -moz-linear-gradient(top, #010101, #181818);
+	background: -webkit-gradient(linear,left top,left bottom,color-stop(0, #010101),color-stop(1, #181818));
+	
+	border: 2px solid #454545; 
+	overflow: hidden;
+	
+	-webkit-transition: opacity 0.4s ease-out;
+}
+
+h2 {
+  background: -moz-linear-gradient(left, #4d4d4d, 0.4, #4d4d4d, 0.5, white, 0.6, #4d4d4d, #4d4d4d); 
+  background: -webkit-gradient(linear,left top,right top,color-stop(0, #4d4d4d),color-stop(0.4, #4d4d4d),color-stop(0.5, white),color-stop(0.6, #4d4d4d),color-stop(1, #4d4d4d)); 
+  
+  -moz-background-clip: text;
+  -webkit-background-clip: text;
+/*  
+  -moz-text-fill-color: transparent;
+  -webkit-text-fill-color: transparent;
+*/  
+  -webkit-animation: slidetounlock 5s infinite;
+  
+  font-size: 80px;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-weight: 300;
+  
+  padding: 0;
+  width: 200%;
+}
+
+h2 img {
+	vertical-align: middle; 
+}
+</pre>
+<h2>Javascript Fun</h2>
+<p>Now for the Javascript fun:</p>
+<pre class="brush: js;">function $(id){ return document.getElementById(id); }
+
+$('slider').addEventListener('touchmove', function(event) {
+    event.preventDefault();
+    var el = event.target;
+    var touch = event.touches[0];
+    curX = touch.pageX - this.offsetLeft - 73;
+    if(curX &lt;= 0) return;
+    if(curX &gt; 550){
+    	$('well').style.opacity = 0;
+    }
+   	el.style.webkitTransform = 'translateX(' + curX + 'px)'; 
+}, false);
+
+$('slider').addEventListener('touchend', function(event) {	
+    this.style.webkitTransition = '-webkit-transform 0.3s ease-in';
+    this.addEventListener( 'webkitTransitionEnd', function( event ) { this.style.webkitTransition = 'none'; }, false );
+    this.style.webkitTransform = 'translateX(0px)';
+}, false);
+</pre>
+<p>To capture touch events in Webkit, you'll mostly be working with the <strong>touchstart</strong>, <strong>touchmove</strong> and <strong>touchend</strong> events. After attaching the Javascript touch events, we just have to position the slider button based on the page coordinates of your finger, and trigger our CSS3 animations. I've offset the x-axis position an additional 73px (half of our slider image) to position the touch point for the slider in the middle of the image.</p>
+<p>We only neeed to worry about the movement along the x-axis, so we use the <strong>translateX</strong> function with the <strong>-webkit-transform</strong> property. The nice thing about Safari is that it will <a href="http://developer.apple.com/safari/library/documentation/internetweb/conceptual/safarivisualeffectsprogguide/Transitions/Transitions.html#//apple_ref/doc/uid/TP40008032-CH4-SW1">trigger animations automatically</a> when your declared properties are changed - in this case "opacity". These implicit animations also <a href="http://developer.apple.com/safari/library/documentation/AppleApplications/Reference/SafariCSSRef/Introduction.html#//apple_ref/doc/uid/TP40002050">only apply to certain properties</a>.</p>
+<p>To get the button to slide back to the starting position when the user releases their finger, we use the touchend event to add the <strong>-webkit-transition</strong> property to our button. Unfortunately, to avoid funkiness from conflicting events, we need to programmatically apply and remove the transition in the touchend event. We do this by attaching a <strong>webkitTransitionEnd</strong> event to the object and then setting the CSS property to "none".</p>
+<h2>Conclusion</h2>
+<p>This was a fun little experiment to get started using Mobile Safari's touch capabilities. Currently, I've only gotten this working on iphone, ipod touch and ipad. I may play around with trying to get it to work on Android, so if anyone has any suggestions please let me know.</p>

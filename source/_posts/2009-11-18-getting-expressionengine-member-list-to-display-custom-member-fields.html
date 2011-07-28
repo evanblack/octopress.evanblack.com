@@ -1,0 +1,42 @@
+---
+layout: default
+title: "Getting the ExpressionEngine Member List to Display Custom Member Fields"
+---
+<h1>{{ page.title }}</h1>
+<p>Back when I was working with ExpressionEngine on the <a href="http://www.nicindy.org/" title="NIC Indy">NIC Indy website</a>, I needed to display custom member data fields in the member directory list. I actually found it quite surprising that ExpressionEngine didn't already have an option that allowed you to do this. After some fiddling around with the "memberlist" function, I found a pretty quick and simple way to make this happen.</p>
+<p>First of all, you will need to open up the <strong>mod.member_memberlist.php </strong>file. It will be in the Member Management module, usually located here: "/system/modules/member". Go down to around line number 510. It should look something like this:</p>
+<h2>Before</h2>
+<pre class="brush: php;">$f_sql="SELECT m.member_id, m.username, m.screen_name, m.email, m.url, m.location, m.icq, m.aol_im, m.yahoo_im, m.msn_im, m.location, m.join_date, m.last_visit, m.last_activity, m.last_entry_date, m.last_comment_date, m.last_forum_post_date, m.total_entries, m.total_comments, m.total_forum_topics, m.total_forum_posts, m.language, m.timezone, m.daylight_savings, m.bday_d, m.bday_m, m.bday_y, m.accept_user_email, m.avatar_filename, m.avatar_width, m.avatar_height, (m.total_forum_topics + m.total_forum_posts) AS total_posts, g.group_title ";		
+$p_sql="SELECT COUNT(member_id) AS count ";
+$sql="FROM exp_members m, exp_member_groups g 
+WHERE m.group_id = g.group_id 
+AND g.group_id != '3' 
+AND g.group_id != '4' 
+AND g.site_id = '".$DB-&gt;escape_str($PREFS-&gt;ini('site_id'))."'
+AND g.include_in_memberlist = 'y' ";
+</pre>
+<p>You will be adding to these SQL select statements so that it also pulls from the <strong>exp_member_data</strong> table. Here is what you'll need to change the SQL statements to:</p>
+<h2>After</h2>
+<pre class="brush: php;">$f_sql="SELECT m.member_id, m.username, m.screen_name, m.email, m.url, m.location, m.icq, m.aol_im, m.yahoo_im, m.msn_im, m.location, m.join_date, m.last_visit, m.last_activity, m.last_entry_date, m.last_comment_date, m.last_forum_post_date, m.total_entries, m.total_comments, m.total_forum_topics, m.total_forum_posts, m.language, m.timezone, m.daylight_savings, m.bday_d, m.bday_m, m.bday_y, m.accept_user_email, m.avatar_filename, m.avatar_width, m.avatar_height, (m.total_forum_topics + m.total_forum_posts) AS total_posts, g.group_title, md.m_field_id_1, md.m_field_id_2, md.m_field_id_3, md.m_field_id_4, md.m_field_id_5, md.m_field_id_6, md.m_field_id_7, md.m_field_id_8, md.m_field_id_9, md.m_field_id_10, md.m_field_id_11, md.m_field_id_12, md.m_field_id_13, md.m_field_id_14 ";       
+$p_sql="SELECT COUNT(m.member_id) AS count ";
+$sql="FROM exp_members m, exp_member_groups g, exp_member_data md 
+WHERE m.group_id = g.group_id 
+AND m.member_id = md.member_id 
+AND g.group_id != '3' 
+AND g.group_id != '4' 
+AND g.site_id = '".$DB-&gt;escape_str($PREFS-&gt;ini('site_id'))."'
+AND g.include_in_memberlist = 'y' ";
+</pre>
+<p>The important changes here are on lines 1, 3 and 5. Unfortunately, you will need to manually add as many "m_field_id_x"s for as many custom member fields that have been created.</p>
+<h2>Now to Display the Custom Fields</h2>
+<p>To display the newly selected custom fields on the front-end of the member list, you will need to edit the <strong>Member Templates</strong>. You can do this in the Control Panel by going to your Member Profile Theme and finding the <strong>Member List Rows</strong> template. You can display the custom member fields simply by using the normal ExpressionEngine template tags like this - {m_field_id_x} - replacing "x" with whichever member profile field you want. Here is a section of mine:</p>
+<pre class="brush: html;">&lt;ul&gt;
+    &lt;li&gt;&lt;h6&gt;Contact Information&lt;/h6&gt;&lt;/li&gt;
+    &lt;li&gt;title: &lt;span&gt;{m_field_id_8}&lt;/span&gt;&lt;/li&gt;
+    &lt;li&gt;phone: &lt;span&gt;{m_field_id_5}&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</pre>
+<p>That's pretty much it. The only bad thing here is if Custom Member Fields are ever added you will also need to add them to the SQL statement.</p>
+<h2>The Result</h2>
+<p>As you can see from the image below, I was able to pull out the data I needed for the directory from these custom member fields.</p>
+<p><img src="/uploads/images/nic_result.png" /></p>
